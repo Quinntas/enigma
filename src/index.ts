@@ -114,6 +114,9 @@ export class Enigma {
         this.routes = new Map();
 
         this.server = createServer((req, res) => {
+            this.applyCorsHeaders(res);
+            res.appendHeader('Server', config.serverName);
+
             if (!req.method)
                 return jsonResponse(res, 400, {message: 'Bad Request'});
 
@@ -133,16 +136,6 @@ export class Enigma {
             let json: Json | undefined = undefined;
             let query: Json<string> | undefined = undefined;
 
-            if (req.headers['content-type'] && req.headers['content-type'] === 'application/json') {
-                let data = '';
-                req.on('data', chunk => {
-                    data += chunk;
-                });
-                req.on('end', () => {
-                    json = JSON.parse(data);
-                });
-            }
-
             if (queryParams)
                 query = parse(queryParams) as Json<string>;
 
@@ -154,23 +147,40 @@ export class Enigma {
                 query
             }
 
-            this.applyCorsHeaders(res);
-            res.appendHeader('Server', config.serverName);
+            const contentType = req.headers['content-type'];
 
-            if (route.middlewares) {
-                let i = 0;
-                const next = () => {
-                    if (i < route.middlewares!.length)
-                        route.middlewares![i++](request, res, next);
-                    else
-                        return route.handler(request, res);
+            if (!contentType)
+                return this.handleExit(route, request, res);
 
-                }
-                return next();
+            switch (true) {
+                case contentType.startsWith('application/json'):
+                    let data = '';
+                    req.on('data', chunk => {
+                        data += chunk;
+                    })
+                    req.on('end', () => {
+                        request.json = JSON.parse(data);
+                        this.handleExit(route, request, res);
+                    });
+                    break;
             }
-
-            return route.handler(request, res);
         });
+    }
+
+    private handleExit(route: Route, request: Request, res: Response) {
+        if (route.middlewares) {
+            let i = 0;
+            const next = () => {
+                if (i < route.middlewares!.length)
+                    route.middlewares![i++](request, res, next);
+                else
+                    return route.handler(request, res);
+
+            }
+            return next();
+        }
+
+        return route.handler(request, res);
     }
 
     listen(port: number, callback?: () => void) {
