@@ -39,7 +39,9 @@ interface Route {
     method: string
 }
 
-export type MiddlewareFn = (req: Request, res: Response, next: () => void) => void;
+export type NextFn = () => void;
+
+export type MiddlewareFn = (req: Request, res: Response, next: NextFn) => void;
 
 export class Router {
     public readonly routes: Map<string, Route>;
@@ -162,7 +164,7 @@ export class Enigma {
                         request.json = JSON.parse(data);
                         this.handleExit(route, request, res);
                     });
-                    break;
+                    break
             }
         });
     }
