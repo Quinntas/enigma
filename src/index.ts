@@ -53,6 +53,30 @@ export class Router {
     post(path: string, handler: RouteFn, middlewares?: MiddlewareFn[]) {
         this.routes.set(path, {handler, method: 'POST', middlewares});
     }
+
+    get(path: string, handler: RouteFn, middlewares?: MiddlewareFn[]) {
+        this.routes.set(path, {handler, method: 'GET', middlewares});
+    }
+
+    put(path: string, handler: RouteFn, middlewares?: MiddlewareFn[]) {
+        this.routes.set(path, {handler, method: 'PUT', middlewares});
+    }
+
+    delete(path: string, handler: RouteFn, middlewares?: MiddlewareFn[]) {
+        this.routes.set(path, {handler, method: 'DELETE', middlewares});
+    }
+
+    patch(path: string, handler: RouteFn, middlewares?: MiddlewareFn[]) {
+        this.routes.set(path, {handler, method: 'PATCH', middlewares});
+    }
+
+    options(path: string, handler: RouteFn, middlewares?: MiddlewareFn[]) {
+        this.routes.set(path, {handler, method: 'OPTIONS', middlewares});
+    }
+
+    head(path: string, handler: RouteFn, middlewares?: MiddlewareFn[]) {
+        this.routes.set(path, {handler, method: 'HEAD', middlewares});
+    }
 }
 
 export interface CorsOptions {
