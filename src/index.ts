@@ -194,19 +194,19 @@ export class Enigma {
     }
 
     private handleExit(route: Route, request: Request, res: Response) {
-        if (route.middlewares) {
-            let i = 0;
-            const next = () => {
-                if (i < route.middlewares!.length)
-                    route.middlewares![i++](request, res, next);
-                else
-                    return route.handler(request, res);
+        if (!route.middlewares)
+            return route.handler(request, res)
 
-            }
-            return next();
+        let i = 0;
+
+        const next = () => {
+            if (i < route.middlewares!.length)
+                route.middlewares![i++](request, res, next);
+            else
+                return route.handler(request, res);
         }
 
-        return route.handler(request, res);
+        return next();
     }
 
     listen(port: number, callback?: () => void) {
