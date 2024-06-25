@@ -6,8 +6,8 @@
   "modules": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "prepublish": "pnpm run build",
-    "build": "rimraf ./dist && tsc"
+    "prepublish": "bun run build",
+    "build": " bun build ./src/index.ts"
   },
   "keywords": [],
   "author": "caioquintassantiago@gmail.com",
@@ -17,8 +17,6 @@
     "LICENSE"
   ],
   "devDependencies": {
-    "@types/node": "^20.14.6",
-    "rimraf": "^5.0.7",
-    "typescript": "^5.4.5"
+    "@types/bun": "^1.1.5"
   }
 }

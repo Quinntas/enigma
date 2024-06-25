@@ -1,37 +1,13 @@
-import {createServer, IncomingMessage, Server, ServerResponse} from 'http';
-import {parse} from 'querystring';
+import {Serve, serve, Server} from "bun"
 
-export function jsonResponse<T extends Record<string, unknown>>(res: Response, code: number, data: T) {
-    res.writeHead(code, {'Content-Type': 'application/json'});
-    res.end(JSON.stringify(data));
+
+export interface Request extends globalThis.Request {
 }
 
-export function textResponse(res: Response, code: number, data: string) {
-    res.writeHead(code, {'Content-Type': 'text/plain'});
-    res.end(data);
+export interface Response extends globalThis.Response {
 }
 
-export function htmlResponse(res: Response, code: number, data: string) {
-    res.writeHead(code, {'Content-Type': 'text/html'});
-    res.end(data);
-}
-
-export type Json<T = unknown> = Record<string, T>;
-
-export type Methods = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD';
-
-export interface Request {
-    method: Methods
-    url: string
-    headers: Record<string, string | string[] | undefined>
-    json?: Json
-    query?: Json<string>
-}
-
-export interface Response extends ServerResponse {
-}
-
-export type RouteFn = (req: Request, res: Response) => void;
+export type RouteFn = (req: Request, server: Server) => Promise<Response> | Response;
 
 interface Route {
     handler: RouteFn
@@ -41,7 +17,7 @@ interface Route {
 
 export type NextFn = () => void;
 
-export type MiddlewareFn = (req: Request, res: Response, next: NextFn) => void;
+export type MiddlewareFn = (req: Request, server: Server, next: NextFn) => void;
 
 export class Router {
     public readonly routes: Map<string, Route>;
@@ -79,146 +55,84 @@ export class Router {
     }
 }
 
-export interface CorsOptions {
-    origin: string
-    methods: string[]
-    allowedHeaders: string[]
-    exposedHeaders: string[]
-    credentials: boolean
-}
-
-const defaultCorsOptions: CorsOptions = {
-    origin: '*',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
-    allowedHeaders: [],
-    exposedHeaders: [],
-    credentials: false
-}
-
-export interface EnigmaConfig {
-    serverName: string,
-    cors?: CorsOptions
-}
-
-interface Cors {
-    'Access-Control-Allow-Origin': string
-    'Access-Control-Allow-Methods': string
-    'Access-Control-Allow-Headers': string
-    'Access-Control-Expose-Headers': string
-    'Access-Control-Allow-Credentials': string
-}
+export type EnigmaConfig = {
+    startup?: () => void
+    port?: number
+    hostname?: string
+    defaultResponses?: {
+        notFound?: Response
+        methodNotAllowed?: Response
+    }
+} & Omit<Serve<unknown>, 'fetch'>
 
 export class Enigma {
-    private routes: Map<string, Route>;
-    private server: Server<typeof IncomingMessage, typeof ServerResponse>
+    private readonly routes: Map<string, Route>;
+    private readonly config: EnigmaConfig;
 
-    private corsOptions: CorsOptions;
-    private readonly corsHeaders: Cors
-
-    private generateCorsHeaders() {
-        return {
-            'Access-Control-Allow-Origin': this.corsOptions.origin,
-            'Access-Control-Allow-Methods': this.corsOptions.methods.join(','),
-            'Access-Control-Allow-Headers': this.corsOptions.allowedHeaders.join(','),
-            'Access-Control-Expose-Headers': this.corsOptions.exposedHeaders.join(','),
-            'Access-Control-Allow-Credentials': this.corsOptions.credentials.toString()
+    private readonly defaultNotFoundResponse = new Response(
+        JSON.stringify({message: "Method not allowed"}), {
+            status: 405,
+            headers: {'Content-Type': 'application/json'}
         }
-    }
+    )
 
-    private applyCorsHeaders(res: ServerResponse) {
-        res.appendHeader('Access-Control-Allow-Origin', this.corsHeaders['Access-Control-Allow-Origin']);
-        res.appendHeader('Access-Control-Allow-Methods', this.corsHeaders['Access-Control-Allow-Methods']);
-        res.appendHeader('Access-Control-Allow-Headers', this.corsHeaders['Access-Control-Allow-Headers']);
-        res.appendHeader('Access-Control-Expose-Headers', this.corsHeaders['Access-Control-Expose-Headers']);
-        res.appendHeader('Access-Control-Allow-Credentials', this.corsHeaders['Access-Control-Allow-Credentials']);
-    }
+    private readonly defaultMethodNotAllowedResponse = new Response(
+        JSON.stringify({message: "Method not allowed"}), {
+            status: 405,
+            headers: {'Content-Type': 'application/json'}
+        }
+    )
 
     constructor(config: EnigmaConfig) {
-        this.corsOptions = config.cors || defaultCorsOptions;
-        this.corsHeaders = this.generateCorsHeaders();
-
         this.routes = new Map();
+        this.config = config;
+    }
 
-        this.server = createServer((req, res) => {
-            this.applyCorsHeaders(res);
-            res.appendHeader('Server', config.serverName);
+    private getResponse(key: string, defaultResponse: Response): Response {
+        return this.config.defaultResponses && (this.config.defaultResponses as Record<string, Response>)[key]
+            ? (this.config.defaultResponses as Record<string, Response>)[key] : defaultResponse;
+    }
 
-            if (!req.method)
-                return jsonResponse(res, 400, {message: 'Bad Request'});
+    listen() {
+        const routes = this.routes;
 
-            if (!req.url)
-                return jsonResponse(res, 400, {message: 'Bad Request'});
+        const notFound = this.getResponse('notFound', this.defaultNotFoundResponse);
+        const methodNotAllowed = this.getResponse('methodNotAllowed', this.defaultMethodNotAllowedResponse);
 
-            const splitUrl = req.url.split('?');
+        const server = serve({
+            ...this.config,
+            async fetch(req, server) {
+                const url = new URL(req.url);
 
-            const url = splitUrl[0];
-            const queryParams: string | number = splitUrl[1];
+                const route = routes.get(url.pathname);
 
-            const route = this.routes.get(url);
+                if (!route)
+                    return notFound;
 
-            if (!route)
-                return jsonResponse(res, 404, {message: 'Not Found'});
+                if (route.method !== req.method)
+                    return methodNotAllowed;
 
-            let json: Json | undefined = undefined;
-            let query: Json<string> | undefined = undefined;
+                if (!route.middlewares || route.middlewares.length === 0)
+                    return route.handler(req, server)
 
-            if (queryParams)
-                query = parse(queryParams) as Json<string>;
+                let i = 0;
 
-            const request: Request = {
-                method: req.method as Methods,
-                url: req.url,
-                headers: req.headers,
-                json,
-                query
+                const next = () => {
+                    if (i < route.middlewares!.length)
+                        route.middlewares![i++](req, server, next);
+                    else
+                        return route.handler(req, server);
+                    return new Response
+                }
+
+                return next();
             }
+        })
 
-            const contentType = req.headers['content-type'];
+        if (this.config.startup)
+            this.config.startup();
 
-            if (!contentType)
-                return this.handleExit(route, request, res);
-
-            switch (true) {
-                case contentType.startsWith('application/json'):
-                    let data = '';
-                    req.on('data', chunk => {
-                        data += chunk;
-                    })
-                    req.on('end', () => {
-                        request.json = JSON.parse(data);
-                        this.handleExit(route, request, res);
-                    });
-                    break
-            }
-        });
-    }
-
-    private handleExit(route: Route, request: Request, res: Response) {
-        if (!route.middlewares)
-            return route.handler(request, res)
-
-        let i = 0;
-
-        const next = () => {
-            if (i < route.middlewares!.length)
-                route.middlewares![i++](request, res, next);
-            else
-                return route.handler(request, res);
-        }
-
-        return next();
-    }
-
-    listen(port: number, callback?: () => void) {
-        this.server.listen(port, callback);
-    }
-
-    startup(callback: () => void) {
-        this.server.on('listening', callback);
-    }
-
-    shutdown(callback: () => void) {
-        this.server.on('close', callback);
+        return server
     }
 
     use(path: string, router: Router) {

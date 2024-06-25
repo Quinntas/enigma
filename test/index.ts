@@ -1,18 +1,26 @@
-import {Enigma, jsonResponse, Router} from "../src";
+import {Enigma, Request, Router} from "../src";
 
 const app = new Enigma({
-    serverName: 'Enigma',
+    development: true,
+    port: 3000,
+    startup: () => {
+        console.log('Server started on port 3000')
+    }
 })
 
 const router = new Router();
 
-router.post('/test', (req, res) => {
-    console.log(req)
-    return jsonResponse(res, 200, {message: 'Hello, World!'})
-})
+router.post('/test', async (_req: Request, _server) => {
+    return new Response(JSON.stringify({
+        message: 'Hello World'
+    }), {
+        status: 200,
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+}, [])
 
 app.use('/', router);
 
-app.listen(3000, () => {
-    console.log('Server is running on port 3000')
-})
+app.listen()
