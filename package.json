@@ -7,7 +7,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "prepublish": "bun run build",
-    "build": " bun build ./src/index.ts"
+    "build": "bun build --target=bun ./src/index.ts --outdir=./dist --minify && bun run tsc"
   },
   "keywords": [],
   "author": "caioquintassantiago@gmail.com",

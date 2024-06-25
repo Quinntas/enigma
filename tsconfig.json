@@ -9,6 +9,7 @@
     "module": "node16",
     "target": "ES2022",
     "declaration": true,
+    "emitDeclarationOnly": true,
     "experimentalDecorators": true,
     "strict": true,
     "alwaysStrict": true,
@@ -22,6 +23,9 @@
     "noImplicitReturns": true,
     "skipLibCheck": true
   },
+  "include": [
+    "src/**/*"
+  ],
   "exclude": [
     "node_modules"
   ]
