@@ -11,6 +11,6 @@ router.useMiddleware(bodyParserMiddleware)
 
 router.get('/', healthCheckController);
 
-router.post('/users', createUserController)
-
-
+router.group('/users', [], userRouter => {
+    userRouter.post('/', createUserController)
+})

@@ -3,6 +3,7 @@ import {Router} from "./Router";
 import {HttpContext} from "./HttpContext";
 import {EnigmaConfig, Json, Method, Route} from "./Types";
 import {serializeEnigmaResponse} from "./Response";
+import {constructFullPath} from "../../utils/ConstructFullPath";
 
 export class Enigma {
     private readonly routes: Map<string, Route>;
@@ -15,7 +16,7 @@ export class Enigma {
 
     public use(path: string, router: Router) {
         for (const route of router.routes) {
-            const fullPath = path === '/' || path === '' ? route.path : route.path === '/' ? path : `${path}${route.path}`;
+            const fullPath = constructFullPath(path, route.path);
             this.routes.set(fullPath, route);
         }
     }
@@ -34,7 +35,7 @@ export class Enigma {
 
                 if (!route.methods.includes(req.method as Method))
                     return new Response("Method not allowed", {status: 405});
-                
+
                 let json: Json | undefined;
                 if (req.method !== 'GET' && req.headers.get('content-type') === 'application/json')
                     json = await req.json() as Json;

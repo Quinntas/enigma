@@ -1,14 +1,15 @@
-import {Controller} from "./Controller";
 import {Middleware} from "./Middleware";
 import {Method, Route} from "./Types";
+import {Controller} from "./Controller";
+import {constructFullPath} from "../../utils/ConstructFullPath";
 
 export class Router {
     private readonly _routes: Route[];
     private readonly _middlewares: Middleware[];
 
-    constructor() {
+    constructor(middlewares: Middleware[] = []) {
         this._routes = [];
-        this._middlewares = [];
+        this._middlewares = middlewares;
     }
 
     get routes() {
@@ -26,14 +27,24 @@ export class Router {
             methods,
             controller,
             middlewares: concatMiddlewares
-        })
+        });
     }
 
     get(path: string, controller: Controller, middlewares: Middleware[] = []) {
-        this.useController(path, ['GET'], controller, middlewares)
+        this.useController(path, ['GET'], controller, middlewares);
     }
 
     post(path: string, controller: Controller, middlewares: Middleware[] = []) {
-        this.useController(path, ['POST'], controller, middlewares)
+        this.useController(path, ['POST'], controller, middlewares);
+    }
+
+    group(prefix: string, middlewares: Middleware[], callback: (router: Router) => void) {
+        const tempRouter = new Router([...this._middlewares, ...middlewares]);
+        callback(tempRouter);
+
+        tempRouter.routes.forEach(route => {
+            const fullPath = constructFullPath(prefix, route.path);
+            this.useController(fullPath, route.methods, route.controller, route.middlewares);
+        });
     }
 }
