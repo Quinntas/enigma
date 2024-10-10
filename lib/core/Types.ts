@@ -5,10 +5,13 @@ import {Middleware} from "./Middleware";
 export interface Request extends globalThis.Request {
 }
 
-export interface Response extends globalThis.Response {
+export interface Response {
+    statusCode: number
+    headers: globalThis.Response['headers']
+    body: any
 }
 
-export type NextFn = () => void;
+export type NextFn = () => void | Promise<void>;
 
 export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD'
 
