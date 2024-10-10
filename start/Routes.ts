@@ -2,6 +2,7 @@ import {Router} from "../lib/core/Router";
 import {bodyParserMiddleware, corsMiddleware, loggerMiddleware} from "../app/modules/shared/middlewares";
 import {healthCheckController} from "../app/modules/shared/controllers";
 import {createUserController} from "../app/modules/user/controllers/CreateUser";
+import {loginController} from "../app/modules/user/controllers/Login";
 
 export const router = new Router();
 
@@ -13,4 +14,5 @@ router.get('/', healthCheckController);
 
 router.group('/users', [], userRouter => {
     userRouter.post('/', createUserController)
+    userRouter.post('/login', loginController)
 })
