@@ -3,12 +3,16 @@ import {Logger} from "../../../../bin/Logger";
 import {Cryptography} from "../../../../utils/crypto";
 import env from "../../../../start/Env";
 import {ServiceError} from "../../../../lib/core/Errors";
+import {Cache} from "../../../../lib/core/Cache";
+import {JWT} from "../../../../utils/jwt";
+import {LOGIN_EXPIRATION} from "./User.Constants";
 
 
 export class UserService {
     constructor(
         private readonly logger: Logger,
-        private readonly userRepository: UserRepository
+        private readonly userRepository: UserRepository,
+        private readonly cache: Cache
     ) {
     }
 
@@ -28,10 +32,15 @@ export class UserService {
         if (!isValid)
             throw new ServiceError(401, 'Invalid email or password')
 
+        const expiresIn = LOGIN_EXPIRATION
+        const expireDate = new Date(Date.now() + expiresIn * 1000).toISOString()
+
+        const token = JWT.sign({email: user.email}, env.JWT_SECRET, {expiresIn})
+
         return {
-            token: '',
-            expiresIn: 0,
-            expireDate: new Date().toDateString()
+            token,
+            expiresIn,
+            expireDate
         }
     }
 
