@@ -20,7 +20,7 @@ export class UserService {
         email: string,
         password: string
     ) {
-        const [user] = await this.userRepository.findByEmail(email)
+        const user = await this.userRepository.findByEmail(email)
 
         if (!user)
             throw new ServiceError(401, 'Invalid email or password')

@@ -8,7 +8,7 @@ export interface ParsedEncryptedData {
 
 export namespace Cryptography {
     export function compareString(a: string, b: string): boolean {
-        return timingSafeEqual(Buffer.from(a), Buffer.from(b))
+        return timingSafeEqual(Uint8Array.from(Buffer.from(a)), Uint8Array.from(Buffer.from(b)))
     }
 
     export function encrypt(data: string, pepper: string, iterations: number = 10000, salt?: string): string {

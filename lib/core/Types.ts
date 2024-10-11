@@ -11,6 +11,8 @@ export interface Response {
     body: any
 }
 
+export type CacheTypes = string | object | number
+
 export type NextFn = () => void | Promise<void>;
 
 export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD'

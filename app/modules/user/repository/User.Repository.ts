@@ -2,6 +2,7 @@ import {Repository, RepositoryConfig} from "../../../../lib/core/Repository";
 import {userTable} from "./User.Table";
 import {eq, InferInsertModel} from "drizzle-orm";
 import {Cache} from "../../../../lib/core/Cache";
+import {UserModel} from "./User.Model";
 
 export class UserRepository extends Repository<typeof userTable> {
     constructor(
@@ -11,9 +12,16 @@ export class UserRepository extends Repository<typeof userTable> {
         super(config);
     }
 
-    findByEmail(email: string) {
-        return this.cache.cacheIt(`user:${email}`, async () =>
-            await this.db.select().from(userTable).where(eq(userTable.email, email)))
+    async findByEmail(email: string) {
+        const res = await this.cache.cacheIt(`user:${email}`, 60, async () => {
+            const res = await this.db.select().from(userTable).where(eq(userTable.email, email))
+            if (!res || res.length === 0)
+                return null
+            return res[0]
+        })
+        if (!res)
+            return null
+        return JSON.parse(res) as UserModel
     }
 
     create(model: InferInsertModel<typeof userTable>) {

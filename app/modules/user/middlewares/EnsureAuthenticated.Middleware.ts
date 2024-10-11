@@ -36,7 +36,7 @@ export class EnsureAuthenticatedMiddleware extends Middleware {
             return jsonResponse(ctx, 401, {message: 'Unauthorized'})
         }
 
-        const [user] = await this.userRepository.findByEmail(decoded.email)
+        const user = await this.userRepository.findByEmail(decoded.email)
 
         if (!user)
             return jsonResponse(ctx, 401, {message: 'Unauthorized'})
