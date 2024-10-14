@@ -13,7 +13,7 @@ export class HttpContext {
         this._container = new Map<string, any>()
     }
 
-    get<T>(key: string): T | undefined {
+    get<T>(key: string): T {
         return this._container.get(key) as T
     }
 

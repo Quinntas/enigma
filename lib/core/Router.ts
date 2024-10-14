@@ -44,7 +44,10 @@ export class Router {
 
         tempRouter.routes.forEach(route => {
             const fullPath = constructFullPath(prefix, route.path);
-            this.useController(fullPath, route.methods, route.controller, route.middlewares);
+            this._routes.push({
+                ...route,
+                path: fullPath
+            });
         });
     }
 }

@@ -9,6 +9,6 @@ export class CorsMiddleware extends Middleware {
         ctx.response.headers.set('Access-Control-Allow-Methods', '*')
         ctx.response.headers.set('Access-Control-Allow-Credentials', 'true')
         ctx.response.headers.set('Access-Control-Max-Age', '86400')
-        next()
+        await next()
     }
 }

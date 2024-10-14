@@ -1,3 +1,4 @@
+import * as bun from "bun";
 import {Serve} from "bun";
 import {Controller} from "./Controller";
 import {Middleware} from "./Middleware";
@@ -13,7 +14,7 @@ export interface Response {
 
 export type CacheTypes = string | object | number
 
-export type NextFn = () => void | Promise<void>;
+export type NextFn = () => Promise<void>;
 
 export type Method = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD'
 
@@ -32,3 +33,5 @@ export interface Route {
 export type Json = {
     [key: string]: unknown
 }
+
+export type SocketAddress = bun.SocketAddress
