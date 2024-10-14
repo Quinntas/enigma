@@ -5,6 +5,7 @@ export const baseColumns = {
     id: serial('id').primaryKey(),
     pid: varchar('pid', {length: 191})
         .notNull()
+        .unique()
         .$defaultFn(() => UUIDv4()),
     createdAt: timestamp('created_at', {mode: "date"})
         .notNull()

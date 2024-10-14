@@ -8,7 +8,7 @@ import {ErrorHandlerMiddleware} from "./ErrorHandler.Middleware";
 import {PerformanceMiddleware} from "./Performance.Middleware";
 
 export const loggerMiddleware = new LoggerMiddleware(logger)
-export const errorHandlerMiddleware = new ErrorHandlerMiddleware()
+export const errorHandlerMiddleware = new ErrorHandlerMiddleware(logger)
 export const corsMiddleware = new CorsMiddleware()
 export const rateLimitMiddleware = new RateLimitMiddleware(cache)
 export const setIPMiddleware = new SetIPMiddleware()

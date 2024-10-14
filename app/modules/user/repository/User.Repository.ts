@@ -25,6 +25,6 @@ export class UserRepository extends Repository<typeof userTable> {
     }
 
     create(model: InferInsertModel<typeof userTable>) {
-        return this.db.insert(userTable).values(model)
+        return this.db.insert(userTable).values(model).execute()
     }
 }

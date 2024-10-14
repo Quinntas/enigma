@@ -16,11 +16,7 @@ export class CreateUserController extends Controller {
     async handle(ctx: HttpContext) {
         const body = bodyParser(createUserSchema, ctx.json);
 
-        try {
-            await this.userService.createUser(body.email, body.password)
-        } catch {
-            return jsonResponse(ctx, 500, {message: 'Internal server error'})
-        }
+        await this.userService.createUser(body.email, body.password)
 
         return jsonResponse(ctx, 201, {message: 'Created Successfully'})
     }

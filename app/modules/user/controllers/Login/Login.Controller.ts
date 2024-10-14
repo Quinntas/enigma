@@ -16,13 +16,7 @@ export class LoginController extends Controller {
     async handle(ctx: HttpContext) {
         const body = bodyParser(loginSchema, ctx.json);
 
-        let response;
-
-        try {
-            response = await this.userService.login(body.email, body.password)
-        } catch {
-            return jsonResponse(ctx, 500, {message: 'Internal server error'})
-        }
+        const response = await this.userService.login(body.email, body.password)
 
         return jsonResponse(ctx, 200, response)
     }

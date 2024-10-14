@@ -6,6 +6,7 @@ import {ServiceError} from "../../../../lib/core/Errors";
 import {Cache} from "../../../../lib/core/Cache";
 import {JWT} from "../../../../utils/jwt";
 import {LOGIN_EXPIRATION} from "./User.Constants";
+import {RepositoryErrorData} from "../../../../bin/RepositoryErrorData";
 
 
 export class UserService {
@@ -50,9 +51,17 @@ export class UserService {
     ) {
         const hashedPassword = Cryptography.encrypt(password, env.PEPPER)
 
-        await this.userRepository.create({
-            email,
-            password: hashedPassword
-        })
+        try {
+            await this.userRepository.create({
+                email,
+                password: hashedPassword
+            })
+        } catch (e: unknown) {
+            if ((e as RepositoryErrorData).code === '23505')
+                throw new ServiceError(409, 'Email already exists')
+            throw e
+        }
     }
 }
+
+
