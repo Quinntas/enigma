@@ -1,5 +1,6 @@
 import {z} from "zod";
 
+
 export const createUserSchema = z.object({
     email: z.string().email({
         message: "Invalid email address.",
@@ -8,3 +9,5 @@ export const createUserSchema = z.object({
         message: "Password must be at least 8 characters.",
     }),
 })
+
+

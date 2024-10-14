@@ -7,9 +7,10 @@ import {
     rateLimitMiddleware,
     setIPMiddleware
 } from "../app/modules/shared/middlewares";
-import {healthCheckController} from "../app/modules/shared/controllers";
 import {createUserController} from "../app/modules/user/controllers/CreateUser";
 import {loginController} from "../app/modules/user/controllers/Login";
+import {healthCheckController} from "../app/modules/shared/controllers/healthCheck";
+import {openAPIController} from "../app/modules/shared/controllers/openAPI";
 
 export const router = new Router();
 
@@ -21,6 +22,7 @@ router.useMiddleware(corsMiddleware)
 router.useMiddleware(loggerMiddleware)
 
 router.get('/', healthCheckController);
+router.get('/openapi', openAPIController)
 
 router.group('/users', [], userRouter => {
     userRouter.post('/', createUserController)
